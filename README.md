@@ -13,7 +13,7 @@ We solved this project on our own, except for:
 
 ## ER-design
 
-The model is in the file [`templates/er-model.png`](er-model.png):
+The model is in the file [`er-model.png`](er-model.png):
 
 <center>
     <img src="er-model.png" width="100%">

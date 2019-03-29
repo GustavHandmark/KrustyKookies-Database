@@ -18,24 +18,55 @@ def get_ping():
 
 @post('/reset')
 def reset():
+
     return
 
 @get('/customers')
 def get_customers():
-    return
-
+    c = conn.cursor()
+    c.execute("""
+        SELECT *
+        FROM customers
+    """)
+    s = {"customers":[{"name":name,"address":address} for (name, address) in c]}
+    return format_response(s)
+ 
 @get('/ingredients')
 def get_ingredients():
-    return
+    c = conn.cursor()
+    c.execute("""
+        SELECT *
+        FROM ingredients
+    """)
+    s = {"ingredients":[{"name":name,"quantity":quantity,"unit":unit} for (name, unit, quantity) in c]}
+    return format_response(s)
 
 @get('/cookies')
 def get_cookies():
-    data = request.json
-    return
+    c = conn.cursor()
+    c.execute(
+        """
+        SELECT *
+        FROM cookies
+        ORDER BY name
+        """
+    )
+    s = {"cookies":[{"name":name} for name in c]}
+    return format_response(s)
 
 @get('/recipes')
 def get_recipes():
-    return
+    c = conn.cursor()
+    c.execute("""
+        SELECT cookie_name,ingredient_name,quantity,unit
+        FROM recipes
+        JOIN ingredients
+        USING (ingredient_name)
+        ORDER BY name, ingredient
+    """)
+    ##Definately not gonna work, will wait until we have the db.
+    s = {"recipes":[{"cookie":cookie,"ingredient":ingredient,"quantity":quantity,"unit":unit} for (cookie,ingredient, quantity, unit) in c]}
+    return format_response(s)
 
 @post('/pallets')
 def create_pallet():

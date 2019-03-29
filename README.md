@@ -3,13 +3,12 @@
 This is the report for
 
  + Daniel Regefalk, `ine15dre`
- + Fredrik Olsson, `ine15`
- + Gustav Handmark, ``
+ + Fredrik Olsson, `ine15fol`
+ + Gustav Handmark, `jup14gha`
 
 We solved this project on our own, except for:
 
  + The Peer-review meeting
- + ... describe any other help you've gotten ...
 
 
 ## ER-design
@@ -34,39 +33,22 @@ The model is in the file [`er-model.png`](er-model.png):
 
 ## Scripts to set up database
 
-The scripts used to set up and populate the database are in:
+The script used to set up the database is:
 
- + [`create-schema.sql`](create-schema.sql) (defines the tables), and
- + [`initial-data.sql`](initial-data.sql) (inserts data).
+ + [`server/database.sql`](server/database.sql) (defines the tables)
 
-So, to create and initialize the database, we run:
+To create the database, we run:
 
 ```shell
-sqlite3 krusty-db.sqlite < create-schema.sql
-sqlite3 krusty-db.sqlite < initial-data.sql
+sqlite3 server/krusty-db.sqlite < server/database.sql
 ```
 
-(or whatever you call your database file).
+Using the `/reset` endpoint populates the database.
 
 ## How to compile and run the program
 
-This section should give a few simple commands to type to
-compile and run the program from the command line, such as:
+Tun the program from the command line with:
 
 ```shell
-./gradlew run
-```
-
-or
-
-```shell
-javac -d bin/ -cp src src/krusty/Main.java
-java -cp bin:sqlite-jdbc.jar krusty.Main
-```
-
-or, if you put your commands into a `Makefile`:
-
-```shell
-make compile
-make run
+python3 server/server.py
 ```

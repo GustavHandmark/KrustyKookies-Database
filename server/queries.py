@@ -2,9 +2,10 @@ from bottle import request, response
 from bottle import route
 from bottle import post, get, put, delete
 import json
+import datetime
 
 import sqlite3
-conn = sqlite3.connect("krustykookies.db")
+conn = sqlite3.connect("krusty-db.sqlite")
 
 
 def format_response(d):
@@ -39,34 +40,93 @@ def get_recipes():
 
 @post('/pallets')
 def create_pallet():
-    #Everything in the body of the request will be in data.
     data = request.json
+    cookie_name = data['cookie']
+
+    """
+    {
+        "status": "no such cookie"
+    }
+
+    {
+        "status": "not enough ingredients"
+    }
+
+    {
+        "status": "ok",
+        "id": "9ff0571af3ea2b12065946f57ddd4527"
+    }
+    """
+
+
+    c.execute(
+        """
+        INSERT
+        INTO    pallets(production_date, cookie_name)
+        VALUES  (?, ?)
+        """, [datetime.datetime.now().strftime("%Y-%m-%d"), cookie_name]
+    )
+    conn.commit()
+
     return
 
 @get('/pallets')
 def get_pallets():
+    """
+    Parameters:
+
+    after: restricts the search so we only get pallets produced after (not including) the given date
+
+    before: restricts the search so we only get pallets produced before (not including) the given date
+
+    cookie: restricts the search so we only get pallets with the given cookie
+
+    blocked: restricts the search so we only get pallets which are blocked or non-blocked -- 0 means non-blocked, 1 means blocked
+    """
+
     data = request.json
-    return
+    after = data['after']
+    before = data['before']
+    cookie_name = data['cookie']
+    blocked = data['blocked']
+
+    c = conn.cursor()
+    c.execute("""
+        SELECT  *
+        FROM    pallets
+        WHERE   (production_date > ? OR ? IS NULL) AND
+                (production_date < ? OR ? IS NULL) AND
+                (receipe_name = ? OR ? IS NULL) AND
+                (blocked = ? OR ? IS NULL)
+    """, [after, after, before, before, cookie_name, cookie_name, blocked, blocked])
+
+    s = [{
+        "id": id,
+        "cookie": cookie,
+        "productionDate": production_date,
+        "customer": customer,
+        "blocked": blocked
+    } for (id, cookie, prouction_date, customer, blocked) in c]
+
+    return format_response({'data': s})
 
 
-@route('/block/<cookie_name>/<from_date>/<to_date>',method=['GET','POST'])
+@route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
 def block(cookie_name, from_date, to_date):
-    c = conn.cursor()
-    c.execute("""
-        UPDATE pallets
-        SET blocked = 1
-        WHERE recipe_name = ? AND production_date => ? AND production_date <= to_date?
-    """, [cookie_name, from_date, to_date])
+    setBlocked(1, cookie_name, from_date, to_date)
 
-
-@route('/unblock/<cookie_name>/<from_date>/<to_date>',method=['GET','POST'])
+@route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
 def unblock(cookie_name, from_date, to_date):
+    setBlocked(0, cookie_name, from_date, to_date)
+
+def setBlocked(blocked, cookie_name, from_date, to_date):
     c = conn.cursor()
     c.execute("""
         UPDATE pallets
-        SET blocked = 0
-        WHERE recipe_name = ? AND production_date => ? AND production_date <= to_date?
-    """, [cookie_name, from_date, to_date])
+        SET blocked = ?
+        WHERE recipe_name = ? AND production_date => ? AND production_date <= ?
+    """, [blocked, cookie_name, from_date, to_date])
+    conn.commit()
 
 '''
 Old stuff

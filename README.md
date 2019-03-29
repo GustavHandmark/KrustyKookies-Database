@@ -1,6 +1,6 @@
 # EDAF75, project report
 
-This is the report for
+This is the report for:
 
  + Daniel Regefalk, `ine15dre`
  + Fredrik Olsson, `ine15fol`
@@ -21,15 +21,13 @@ The model is in the file [`er-model.png`](er-model.png):
 
 ## Relations
 
-### TODO: 
-
-+ recipes(**recipe_name**)
-+ ingredients(**ingredient_name**, unit, total_quantity, last_delivery_amount, last_delivery_date)
-+ recipie_ingredients(_recipe_name_, _ingredient_name_)
-+ pallets(**pallet_id**, blocked, production_date, shipping_date, delivery_date)
-+ orders(**order_id**, order_created_date, order_delivery_date)
-+ pallets(**customer_id**, name, address)
-
++ cookies(**name**)
++ ingredients(**name**, quantity, unity, last_delivery_amount, last_delivery_date)
++ recipes(**_cookie_name_**, **_ingredient_name_**, quantity)
++ pallets(**id**, _cookie_name_, _order_id_, blocked, production_date, shipping_date, delivery_date)
++ orders(**id**, _customer_id_, order_created_date, order_delivery_date)
++ order_items(**_cookie_name_**, **_order_id_**, quantity)
++ customers(**id**, name, address)
 
 ## Scripts to set up database
 

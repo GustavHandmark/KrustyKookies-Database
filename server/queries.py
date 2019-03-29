@@ -4,7 +4,50 @@ from bottle import post, get, put, delete
 import json
 
 import sqlite3
-conn = sqlite3.connect("movies.db")
+conn = sqlite3.connect("krustykookies.db")
+
+
+def format_response(d):
+    return json.dumps(d,indent = 4) + '\n'
+
+@get('/ping')
+def get_ping():
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({'data':'pong'})
+
+@post('/reset')
+def reset():
+    return
+
+@get('/customers')
+def get_customers():
+    return
+
+@get('/ingredients')
+def get_ingredients():
+    return
+
+@get('/cookies')
+def get_cookies():
+    return
+
+@get('/recipes')
+def get_recipes():
+    return
+
+@post('/pallets')
+def create_pallet():
+    #Everything in the body of the request will be in data.
+    data = request.json
+    return
+
+@get('/pallets')
+def get_pallets():
+    data = request.json
+    return
+
+
 
 
 
@@ -14,11 +57,6 @@ Old stuff
 def format_response(d):
     return json.dumps(d,indent = 4) + '\n'
 
-@get('/ping')
-def get_ping():
-    response.content_type = 'application/json'
-    response.status = 200
-    return format_response({'data':'pong'})
 
 @get('/movies')
 def get_movies():

@@ -30,6 +30,7 @@ def get_ingredients():
 
 @get('/cookies')
 def get_cookies():
+    data = request.json
     return
 
 @get('/recipes')
@@ -48,9 +49,24 @@ def get_pallets():
     return
 
 
+@route('/block/<cookie_name>/<from_date>/<to_date>',method=['GET','POST'])
+def block(cookie_name, from_date, to_date):
+    c = conn.cursor()
+    c.execute("""
+        UPDATE pallets
+        SET blocked = 1
+        WHERE recipe_name = ? AND production_date => ? AND production_date <= to_date?
+    """, [cookie_name, from_date, to_date])
 
 
-
+@route('/unblock/<cookie_name>/<from_date>/<to_date>',method=['GET','POST'])
+def unblock(cookie_name, from_date, to_date):
+    c = conn.cursor()
+    c.execute("""
+        UPDATE pallets
+        SET blocked = 0
+        WHERE recipe_name = ? AND production_date => ? AND production_date <= to_date?
+    """, [cookie_name, from_date, to_date])
 
 '''
 Old stuff

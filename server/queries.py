@@ -19,6 +19,37 @@ def get_ping():
 
 @post('/reset')
 def reset():
+    c = conn.cursor()
+    c.execute("DELETE FROM customers")
+    c.execute("DELETE FROM cookies")
+    c.execute("DELETE FROM ingredients")
+    c.execute("DELETE FROM recipes")
+
+    c.execute("""
+    INSERT 
+    INTO users(username,u_name,password)
+    VALUES  ('alice','Alice','dobido'),
+            ('bob','Bob','whasinaname')
+    """)
+    conn.commit()
+    c.execute("""
+    INSERT INTO movies(title,prod_year,imdb_id)
+    VALUES  ('The Shape of Water', 2017, 'tt5580390'),
+            ('Moonlight', 2016, 'tt4975722'),
+            ('Spotlight', 2015, 'tt1895587'),
+            ('Birdman', 2014, 'tt2562232')
+    """)
+    conn.commit()
+    c.execute("""
+    INSERT INTO theaters(t_name,capacity)
+    VALUES  ('Kino', 10),
+            ('Södran', 16),
+            ('Skandia', 100)
+    """)
+    conn.commit()
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({"data":'OK'})
 
     return
 
@@ -59,7 +90,7 @@ def get_cookies():
 def get_recipes():
     c = conn.cursor()
     c.execute("""
-        SELECT cookie_name,ingredient_name,quantity,unit
+        SELECT cookie_name,ingredient_name,recipes.quantity,unit
         FROM recipes
         JOIN ingredients
         USING (ingredient_name)

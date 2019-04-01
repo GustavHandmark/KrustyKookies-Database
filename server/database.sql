@@ -18,7 +18,7 @@ CREATE TABLE cookies (
 );
 CREATE TABLE ingredients (
     name    TEXT,
-    quantity    TEXT,
+    quantity    INT,
     unit    TEXT,
     last_delivery_quantity    TEXT,
     last_delivery_date    DATE,

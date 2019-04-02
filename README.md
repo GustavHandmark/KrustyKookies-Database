@@ -45,7 +45,7 @@ Using the `/reset` endpoint populates the database.
 
 ## How to compile and run the program
 
-Tun the program from the command line with:
+Run the program from the command line with:
 
 ```shell
 python3 server/server.py

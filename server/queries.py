@@ -31,7 +31,7 @@ def get_customers():
     """)
     s = {"customers":[{"name":name,"address":address} for (name, address) in c]}
     return format_response(s)
- 
+
 @get('/ingredients')
 def get_ingredients():
     c = conn.cursor()

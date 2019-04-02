@@ -94,24 +94,4 @@ BEGIN
         RAISE (ROLLBACK, "Insufficient ingredients!")
     END;
 
-    /*
-    UPDATE accounts
-    SET    balance = balance - NEW.amount
-    WHERE  user_id = NEW.src_account;
-
-    UPDATE accounts
-    SET    balance = balance + NEW.amount
-    WHERE  user_id = NEW.dst_account;
-
-    SELECT CASE
-        WHEN (
-            SELECT balance
-            FROM   accounts
-            WHERE  user_id = NEW.src_account
-        ) < 0
-        THEN
-            RAISE (ROLLBACK, "Insufficient funds")
-        END;
-    */
 END;
-

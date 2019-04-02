@@ -1,3 +1,6 @@
+#clear; sqlite3 db/krusty.db < server/database.sql; python3 server/server.py;
+#clear; python3 check-krusty.py;
+
 from bottle import request, response
 from bottle import route
 from bottle import post, get, put, delete
@@ -9,19 +12,15 @@ import os
 import sqlite3
 db_path = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','db','krusty.db')) # Should work on every OS
 conn = sqlite3.connect(db_path)
-conn = sqlite3.connect("db/krusty.db")
-
 
 def format_response(d):
     return json.dumps(d, indent=4)
-
 
 @get('/ping')
 def get_ping():
     response.content_type = 'application/json'
     response.status = 200
     return format_response({'data': 'pong'})
-
 
 #@post('/reset')
 @route('/reset', method=['GET', 'POST'])
@@ -84,7 +83,7 @@ def reset():
             ('Vanilla sugar',100000,'g',100000,?)
     """, dates)
     conn.commit()
-#recipes: quantity int, cookie_name text, ingredient_name text
+
     c.execute("""
         INSERT INTO recipes(quantity, cookie_name, ingredient_name)
         VALUES  (450,'Nut ring','Flour'),
@@ -126,18 +125,6 @@ def reset():
     response.status = 200
     return format_response({"status": 'ok'})
 
-    """
-    customer: id, name text, address text,
-    orders: id, order_created_date date, order_deliver_date date, customer_id text.
-    cookies: name text
-    ingredients: name text, quantity int, unit Text, last_delivery_quantity text,
-    last_delivery_date date
-    pallets: id, production_date, shipping_date, delivery_date, blocked, order_id, cookie_name
-    recipes: quantity int, cookie_name text, ingredient_name text
-    order_items: quantity int, cookie_name text, ingredient_name Text,
-
-    """
-
 @get('/customers')
 def get_customers():
     c = conn.cursor()
@@ -145,8 +132,7 @@ def get_customers():
         SELECT name, address
         FROM customers
     """)
-    s = {"customers": [{"name": name, "address": address}
-                       for (name, address) in c]}
+    s = {"customers": [{"name": name, "address": address} for (name, address) in c]}
 
     response.content_type = 'application/json'
     response.status = 200
@@ -204,37 +190,22 @@ def get_recipes():
 @post('/pallets')
 def create_pallet():
     cookie_name = request.query.cookie
-
-    """
-    {
-        "status": "no such cookie"
-    }
-
-    {
-        "status": "not enough ingredients"
-    }
-
-    {
-        "status": "ok",
-        "id": "9ff0571af3ea2b12065946f57ddd4527"
-    }
-    """
-
     c = conn.cursor()
 
-    c.execute(
+    try:
+        c.execute(
         """
-        INSERT
-        INTO    pallets(production_date, cookie_name)
-        VALUES  (?, ?)
+            INSERT
+            INTO    pallets(production_date, cookie_name)
+            VALUES  (?, ?)
         """, [datetime.datetime.now().strftime("%Y-%m-%d"), cookie_name]
-    )
-    conn.commit()
-
-    """
-    if no such cookie -> status no such cookie
-    if rollback -> status not enough ingredients,
-    """
+        )
+        conn.commit()
+    except Exception as e:
+        if str(e) == "Insufficient ingredients!":
+            response.content_type = 'application/json'
+            response.status = 200
+            return format_response({'status': 'not enough ingredients'})
 
     response.content_type = 'application/json'
     response.status = 200
@@ -243,18 +214,6 @@ def create_pallet():
 
 @get('/pallets')
 def get_pallets():
-    """
-    Parameters:
-
-    after: restricts the search so we only get pallets produced after (not including) the given date
-
-    before: restricts the search so we only get pallets produced before (not including) the given date
-
-    cookie: restricts the search s2o we only get pallets with the given cookie
-
-    blocked: restricts the search so we only get pallets which are blocked or non-blocked -- 0 means non-blocked, 1 means blocked
-    """
-
     after = request.query.after
     before = request.query.before
     cookie_name = request.query.cookie
@@ -277,14 +236,14 @@ def get_pallets():
         "id": id,
         "cookie": cookie,
         "productionDate": production_date,
-        "customer": customer, #todo: detta är order_id
-        "blocked": blocked
+        "customer": customer,
+        "blocked": True if blocked == 1 else False
     } for (id, cookie, production_date, customer, blocked) in c]
 
 
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({'data': s})
+    return format_response({'pallets': s})
 
 
 @route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])

@@ -20,7 +20,7 @@ CREATE TABLE ingredients (
     name    TEXT,
     quantity    INT,
     unit    TEXT,
-    last_delivery_quantity    TEXT,
+    last_delivery_quantity    INT,
     last_delivery_date    DATE,
     PRIMARY KEY(name)
 );

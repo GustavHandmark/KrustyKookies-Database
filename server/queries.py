@@ -1,21 +1,27 @@
 from bottle import request, response
 from bottle import route
 from bottle import post, get, put, delete
+import datetime
 import json
 import datetime
+import os
 
 import sqlite3
-conn = sqlite3.connect("krusty-db.sqlite")
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','db','krusty.db')) # Should work on every OS
+conn = sqlite3.connect(db_path)
+conn = sqlite3.connect("db/krusty.db")
 
 
 def format_response(d):
-    return json.dumps(d,indent = 4) + '\n'
+    return json.dumps(d, indent=4) + '\n'
+
 
 @get('/ping')
 def get_ping():
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({'data':'pong'})
+    return format_response({'data': 'pong'})
+
 
 @post('/reset')
 def reset():
@@ -27,51 +33,132 @@ def reset():
 
     c.execute("""
     INSERT 
-    INTO users(username,u_name,password)
-    VALUES  ('alice','Alice','dobido'),
-            ('bob','Bob','whasinaname')
+    INTO customers(name,address)
+    VALUES  ('Finkakor AB','Helsingborg'),
+            ('Småbröd AB', 'Malmö'),
+            ('Kaffebröd AB', 'Landskrona'),
+            ('Bjudkakor AB', 'Ystad'),
+            ('Kalaskakor AB', 'Trelleborg'),
+            ('Partykakor AB', 'Kristianstad'),
+            ('Gästkakor AB', 'Hässleholm'),
+            ('Skånekakor AB', 'Perstorp')
     """)
     conn.commit()
     c.execute("""
-    INSERT INTO movies(title,prod_year,imdb_id)
-    VALUES  ('The Shape of Water', 2017, 'tt5580390'),
-            ('Moonlight', 2016, 'tt4975722'),
-            ('Spotlight', 2015, 'tt1895587'),
-            ('Birdman', 2014, 'tt2562232')
+    INSERT
+    INTO cookies(name)
+    VALUES  ('Nut ring'),
+            ('Nut cookie'),
+            ('Amneris'),
+            ('Tango'),
+            ('Almond delight'),
+            ('Berliner')
     """)
     conn.commit()
+    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    dates = []
+    for x in range(19):
+        dates.append(now)
+
     c.execute("""
-    INSERT INTO theaters(t_name,capacity)
-    VALUES  ('Kino', 10),
-            ('Södran', 16),
-            ('Skandia', 100)
-    """)
+    INSERT INTO ingredients(name,quantity,unit,last_delivery_quantity,last_delivery_date)
+    VALUES  ('Flour',100000,'g',100000,?),
+            ('Butter',100000,'g',100000,?),
+            ('Icing sugar',100000,'g',100000,?),
+            ('Roasted, chopped nuts',100000,'g',100000,?),
+            ('Fine-ground nuts',100000,'g',100000,?),
+            ('Ground, roasted nuts',100000,'g',100000,?),
+            ('Bread crumbs',100000,'g',100000,?),
+            ('Sugar',100000,'g',100000,?),
+            ('Egg whites',100000,'ml',100000,?),
+            ('Chocolate',100000,'g',100000,?),
+            ('Marzipan',100000,'g',100000,?),
+            ('Eggs',100000,'g',100000,?),
+            ('Potato starch',100000,'g',100000,?),
+            ('Wheat flour',100000,'g',100000,?),
+            ('Sodium bicarbonate',100000,'g',100000,?),
+            ('Vanilla',100000,'g',100000,?),
+            ('Chopped almonds',100000,'g',100000,?),
+            ('Cinnamon',100000,'g',100000,?),
+            ('Vanilla sugar',100000,'g',100000,?)
+    """, dates)
+    conn.commit()
+#recipes: quantity int, cookie_name text, ingredient_name text
+    c.execute("""
+        INSERT INTO recipes(quantity, cookie_name, ingredient_name)
+        VALUES  (450,'Nut ring','Flour'),
+                (450,'Nut ring','Butter'),
+                (190,'Nut ring','Icing sugar'),
+                (225,'Nut ring','Roasted, chopped nuts'),
+                (750,'Nut cookie','Fine-ground nuts'),
+                (625,'Nut cookie','Ground, roasted nuts'),
+                (125,'Nut cookie','Bread crumbs'),
+                (375,'Nut cookie','Sugar'),
+                (350,'Nut cookie','Egg whites'),
+                (50,'Nut cookie','Chocolate'),
+                (750,'Amneris','Marzipan'),
+                (250,'Amneris','Butter'),
+                (250,'Amneris','Eggs'),
+                (25,'Amneris','Potato starch'),
+                (25,'Amneris','Wheat flour'),
+                (200,'Tango','Butter'),
+                (250,'Tango','Sugar'),
+                (300,'Tango','Flour'),
+                (4,'Tango','Sodium bicarbonate'),
+                (2,'Tango','Vanilla'),
+                (400,'Almond delight','Butter'),
+                (270,'Almond delight','Sugar'),
+                (279,'Almond delight','Chopped almonds'),
+                (400,'Almond delight','Flour'),
+                (10,'Almond delight','Cinnamon'),
+                (350,'Berliner','Flour'),
+                (250,'Berliner','Butter'),
+                (100,'Berliner','Icing sugar'),
+                (50,'Berliner','Eggs'),
+                (5,'Berliner','Vanilla sugar'),
+                (50,'Berliner','Chocolate')
+    """
+    )
     conn.commit()
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({"data":'OK'})
+    return format_response({"data": 'OK'})
 
-    return
+    """
+    customer: id, name text, address text,
+    orders: id, order_created_date date, order_deliver_date date, customer_id text.
+    cookies: name text
+    ingredients: name text, quantity int, unit Text, last_delivery_quantity text,
+    last_delivery_date date
+    pallets: id, production_date, shipping_date, delivery_date, blocked, order_id, cookie_name
+    recipes: quantity int, cookie_name text, ingredient_name text
+    order_items: quantity int, cookie_name text, ingredient_name Text,
+
+    """
 
 @get('/customers')
 def get_customers():
     c = conn.cursor()
     c.execute("""
-        SELECT *
+        SELECT name, address
         FROM customers
     """)
-    s = {"customers":[{"name":name,"address":address} for (name, address) in c]}
+    s = {"customers": [{"name": name, "address": address}
+                       for (name, address) in c]}
     return format_response(s)
- 
+
+
 @get('/ingredients')
 def get_ingredients():
     c = conn.cursor()
     c.execute("""
-        SELECT *
+        SELECT name, quantity, unit
         FROM ingredients
     """)
-    s = {"ingredients":[{"name":name,"quantity":quantity,"unit":unit} for (name, unit, quantity) in c]}
+    s = {"ingredients": [{"name": name, "quantity": quantity,
+                          "unit": unit} for (name, quantity, unit) in c]}
     return format_response(s)
+
 
 @get('/cookies')
 def get_cookies():
@@ -83,8 +170,9 @@ def get_cookies():
         ORDER BY name
         """
     )
-    s = {"cookies":[{"name":name} for name in c]}
+    s = {"cookies": [{"name": name[0]} for (name) in c]} #Query will always return a tuple.
     return format_response(s)
+
 
 @get('/recipes')
 def get_recipes():
@@ -92,13 +180,13 @@ def get_recipes():
     c.execute("""
         SELECT cookie_name,ingredient_name,recipes.quantity,unit
         FROM recipes
-        JOIN ingredients
-        USING (ingredient_name)
-        ORDER BY name, ingredient
+        JOIN ingredients ON ingredient_name == name
+        ORDER BY cookie_name, ingredient_name
     """)
-    ##Definately not gonna work, will wait until we have the db.
-    s = {"recipes":[{"cookie":cookie,"ingredient":ingredient,"quantity":quantity,"unit":unit} for (cookie,ingredient, quantity, unit) in c]}
+    s = {"recipes": [{"cookie": cookie, "ingredient": ingredient, "quantity": quantity,
+                      "unit": unit} for (cookie, ingredient, quantity, unit) in c]}
     return format_response(s)
+
 
 @post('/pallets')
 def create_pallet():
@@ -120,7 +208,6 @@ def create_pallet():
     }
     """
 
-
     c.execute(
         """
         INSERT
@@ -131,6 +218,7 @@ def create_pallet():
     conn.commit()
 
     return
+
 
 @get('/pallets')
 def get_pallets():
@@ -173,13 +261,15 @@ def get_pallets():
     return format_response({'data': s})
 
 
-@route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
+@route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])
 def block(cookie_name, from_date, to_date):
     setBlocked(1, cookie_name, from_date, to_date)
 
-@route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
+
+@route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])
 def unblock(cookie_name, from_date, to_date):
     setBlocked(0, cookie_name, from_date, to_date)
+
 
 def setBlocked(blocked, cookie_name, from_date, to_date):
     c = conn.cursor()
@@ -189,6 +279,7 @@ def setBlocked(blocked, cookie_name, from_date, to_date):
         WHERE recipe_name = ? AND production_date => ? AND production_date <= ?
     """, [blocked, cookie_name, from_date, to_date])
     conn.commit()
+
 
 '''
 Old stuff

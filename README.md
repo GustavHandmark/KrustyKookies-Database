@@ -38,7 +38,7 @@ The script used to set up the database is:
 To create the database, we run:
 
 ```shell
-sqlite3 server/krusty-db.sqlite < server/database.sql
+sqlite3 db/krusty.db < server/database.sql
 ```
 
 Using the `/reset` endpoint populates the database.

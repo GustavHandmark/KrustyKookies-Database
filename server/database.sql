@@ -1,9 +1,12 @@
+DROP TABLE IF EXISTS customers;
 CREATE TABLE customers (
     id    TEXT DEFAULT (lower(hex(randomblob(16)))),
     name    TEXT,
     address    TEXT,
     PRIMARY KEY(id)
 );
+
+DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
     id    TEXT DEFAULT (lower(hex(randomblob(16)))),
     order_created_date    DATE,
@@ -12,10 +15,14 @@ CREATE TABLE orders (
     PRIMARY KEY(id),
     FOREIGN KEY(customer_id) REFERENCES customers(id)
 );
+
+DROP TABLE IF EXISTS cookies;
 CREATE TABLE cookies (
     name    TEXT,
     PRIMARY KEY(name)
 );
+
+DROP TABLE IF EXISTS ingredients;
 CREATE TABLE ingredients (
     name    TEXT,
     quantity    INT,
@@ -24,6 +31,8 @@ CREATE TABLE ingredients (
     last_delivery_date    DATE,
     PRIMARY KEY(name)
 );
+
+DROP TABLE IF EXISTS pallets;
 CREATE TABLE pallets (
     id    TEXT DEFAULT (lower(hex(randomblob(16)))),
     production_date    DATE,
@@ -36,6 +45,8 @@ CREATE TABLE pallets (
     FOREIGN KEY(order_id) REFERENCES orders(id)
     FOREIGN KEY(cookie_name) REFERENCES cookies(name)
 );
+
+DROP TABLE IF EXISTS recipes;
 CREATE TABLE recipes (
     quantity    INT,
     cookie_name    TEXT,
@@ -44,6 +55,8 @@ CREATE TABLE recipes (
     FOREIGN KEY(cookie_name) REFERENCES cookies(name),
     FOREIGN KEY(ingredient_name) REFERENCES ingredients(name)
 );
+
+DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
     quantity    INT,
     cookie_name    TEXT,
@@ -66,8 +79,8 @@ BEGIN
         WHERE   cookie_name = NEW.cookie_name
     )
     WHERE   name in (
-        select  ingredient_name 
-        from    receipes 
+        select  ingredient_name
+        from    recipes
         where   cookie_name = NEW.cookie_name
     );
 
@@ -75,7 +88,6 @@ BEGIN
     WHEN (
         SELECT quantity
         FROM   ingredients
-        WHERE  cookie_name = NEW.cookie_name
     ) < 0
     THEN
         RAISE (ROLLBACK, "Insufficient ingredients!")

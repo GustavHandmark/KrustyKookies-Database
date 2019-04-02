@@ -1,46 +1,171 @@
 from bottle import request, response
 from bottle import route
 from bottle import post, get, put, delete
+import datetime
 import json
 import datetime
+import os
 
 import sqlite3
-conn = sqlite3.connect("krusty-db.sqlite")
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','db','krusty.db')) # Should work on every OS
+conn = sqlite3.connect(db_path)
+conn = sqlite3.connect("db/krusty.db")
 
 
 def format_response(d):
-    return json.dumps(d,indent = 4) + '\n'
+    return json.dumps(d, indent=4)
+
 
 @get('/ping')
 def get_ping():
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({'data':'pong'})
+    return format_response({'data': 'pong'})
 
-@post('/reset')
+
+#@post('/reset')
+@route('/reset', method=['GET', 'POST'])
 def reset():
+    c = conn.cursor()
+    c.execute("DELETE FROM customers")
+    c.execute("DELETE FROM cookies")
+    c.execute("DELETE FROM ingredients")
+    c.execute("DELETE FROM recipes")
 
-    return
+    c.execute("""
+    INSERT 
+    INTO customers(name,address)
+    VALUES  ('Finkakor AB','Helsingborg'),
+            ('Småbröd AB', 'Malmö'),
+            ('Kaffebröd AB', 'Landskrona'),
+            ('Bjudkakor AB', 'Ystad'),
+            ('Kalaskakor AB', 'Trelleborg'),
+            ('Partykakor AB', 'Kristianstad'),
+            ('Gästkakor AB', 'Hässleholm'),
+            ('Skånekakor AB', 'Perstorp')
+    """)
+    conn.commit()
+    c.execute("""
+    INSERT
+    INTO cookies(name)
+    VALUES  ('Nut ring'),
+            ('Nut cookie'),
+            ('Amneris'),
+            ('Tango'),
+            ('Almond delight'),
+            ('Berliner')
+    """)
+    conn.commit()
+    now = datetime.datetime.now().strftime("%Y-%m-%d")
+    dates = []
+    for x in range(19):
+        dates.append(now)
+
+    c.execute("""
+    INSERT INTO ingredients(name,quantity,unit,last_delivery_quantity,last_delivery_date)
+    VALUES  ('Flour',100000,'g',100000,?),
+            ('Butter',100000,'g',100000,?),
+            ('Icing sugar',100000,'g',100000,?),
+            ('Roasted, chopped nuts',100000,'g',100000,?),
+            ('Fine-ground nuts',100000,'g',100000,?),
+            ('Ground, roasted nuts',100000,'g',100000,?),
+            ('Bread crumbs',100000,'g',100000,?),
+            ('Sugar',100000,'g',100000,?),
+            ('Egg whites',100000,'ml',100000,?),
+            ('Chocolate',100000,'g',100000,?),
+            ('Marzipan',100000,'g',100000,?),
+            ('Eggs',100000,'g',100000,?),
+            ('Potato starch',100000,'g',100000,?),
+            ('Wheat flour',100000,'g',100000,?),
+            ('Sodium bicarbonate',100000,'g',100000,?),
+            ('Vanilla',100000,'g',100000,?),
+            ('Chopped almonds',100000,'g',100000,?),
+            ('Cinnamon',100000,'g',100000,?),
+            ('Vanilla sugar',100000,'g',100000,?)
+    """, dates)
+    conn.commit()
+#recipes: quantity int, cookie_name text, ingredient_name text
+    c.execute("""
+        INSERT INTO recipes(quantity, cookie_name, ingredient_name)
+        VALUES  (450,'Nut ring','Flour'),
+                (450,'Nut ring','Butter'),
+                (190,'Nut ring','Icing sugar'),
+                (225,'Nut ring','Roasted, chopped nuts'),
+                (750,'Nut cookie','Fine-ground nuts'),
+                (625,'Nut cookie','Ground, roasted nuts'),
+                (125,'Nut cookie','Bread crumbs'),
+                (375,'Nut cookie','Sugar'),
+                (350,'Nut cookie','Egg whites'),
+                (50,'Nut cookie','Chocolate'),
+                (750,'Amneris','Marzipan'),
+                (250,'Amneris','Butter'),
+                (250,'Amneris','Eggs'),
+                (25,'Amneris','Potato starch'),
+                (25,'Amneris','Wheat flour'),
+                (200,'Tango','Butter'),
+                (250,'Tango','Sugar'),
+                (300,'Tango','Flour'),
+                (4,'Tango','Sodium bicarbonate'),
+                (2,'Tango','Vanilla'),
+                (400,'Almond delight','Butter'),
+                (270,'Almond delight','Sugar'),
+                (279,'Almond delight','Chopped almonds'),
+                (400,'Almond delight','Flour'),
+                (10,'Almond delight','Cinnamon'),
+                (350,'Berliner','Flour'),
+                (250,'Berliner','Butter'),
+                (100,'Berliner','Icing sugar'),
+                (50,'Berliner','Eggs'),
+                (5,'Berliner','Vanilla sugar'),
+                (50,'Berliner','Chocolate')
+    """
+    )
+    conn.commit()
+
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({"data": 'OK'})
+
+    """
+    customer: id, name text, address text,
+    orders: id, order_created_date date, order_deliver_date date, customer_id text.
+    cookies: name text
+    ingredients: name text, quantity int, unit Text, last_delivery_quantity text,
+    last_delivery_date date
+    pallets: id, production_date, shipping_date, delivery_date, blocked, order_id, cookie_name
+    recipes: quantity int, cookie_name text, ingredient_name text
+    order_items: quantity int, cookie_name text, ingredient_name Text,
+
+    """
 
 @get('/customers')
 def get_customers():
     c = conn.cursor()
     c.execute("""
-        SELECT *
+        SELECT name, address
         FROM customers
     """)
-    s = {"customers":[{"name":name,"address":address} for (name, address) in c]}
+    s = {"customers": [{"name": name, "address": address}
+                       for (name, address) in c]}
+
+    response.content_type = 'application/json'
+    response.status = 200
     return format_response(s)
+
 
 @get('/ingredients')
 def get_ingredients():
     c = conn.cursor()
     c.execute("""
-        SELECT *
+        SELECT name, quantity, unit
         FROM ingredients
     """)
-    s = {"ingredients":[{"name":name,"quantity":quantity,"unit":unit} for (name, unit, quantity) in c]}
+    s = {"ingredients": [{"name": name, "quantity": quantity, "unit": unit} for (name, quantity, unit) in c]}
+    
+    response.content_type = 'application/json'
+    response.status = 200
     return format_response(s)
+
 
 @get('/cookies')
 def get_cookies():
@@ -52,27 +177,33 @@ def get_cookies():
         ORDER BY name
         """
     )
-    s = {"cookies":[{"name":name} for name in c]}
+    s = {"cookies": [{"name": name[0]} for (name) in c]} #Query will always return a tuple.
+    
+    response.content_type = 'application/json'
+    response.status = 200
     return format_response(s)
+
 
 @get('/recipes')
 def get_recipes():
     c = conn.cursor()
     c.execute("""
-        SELECT cookie_name,ingredient_name,quantity,unit
+        SELECT cookie_name,ingredient_name,recipes.quantity,unit
         FROM recipes
-        JOIN ingredients
-        USING (ingredient_name)
-        ORDER BY name, ingredient
+        JOIN ingredients ON ingredient_name == name
+        ORDER BY cookie_name, ingredient_name
     """)
-    ##Definately not gonna work, will wait until we have the db.
-    s = {"recipes":[{"cookie":cookie,"ingredient":ingredient,"quantity":quantity,"unit":unit} for (cookie,ingredient, quantity, unit) in c]}
+    s = {"recipes": [{"cookie": cookie, "ingredient": ingredient, "quantity": quantity, "unit": unit} for (cookie, ingredient, quantity, unit) in c]}
+    
+    response.content_type = 'application/json'
+    response.status = 200
     return format_response(s)
 
+
+#curl -X POST http://localhost:8888/pallets -d "cookie=Tango"
 @post('/pallets')
 def create_pallet():
-    data = request.json
-    cookie_name = data['cookie']
+    cookie_name = request.query.cookie
 
     """
     {
@@ -89,6 +220,7 @@ def create_pallet():
     }
     """
 
+    c = conn.cursor()
 
     c.execute(
         """
@@ -99,7 +231,10 @@ def create_pallet():
     )
     conn.commit()
 
-    return
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({'data': 'OK'})
+
 
 @get('/pallets')
 def get_pallets():
@@ -110,228 +245,66 @@ def get_pallets():
 
     before: restricts the search so we only get pallets produced before (not including) the given date
 
-    cookie: restricts the search so we only get pallets with the given cookie
+    cookie: restricts the search s2o we only get pallets with the given cookie
 
     blocked: restricts the search so we only get pallets which are blocked or non-blocked -- 0 means non-blocked, 1 means blocked
     """
 
-    data = request.json
-    after = data['after']
-    before = data['before']
-    cookie_name = data['cookie']
-    blocked = data['blocked']
+    after = request.query.after
+    before = request.query.before
+    cookie_name = request.query.cookie
+    blocked = request.query.blocked
+
 
     c = conn.cursor()
     c.execute("""
-        SELECT  *
+        SELECT  id, cookie_name, production_date, order_id, blocked
         FROM    pallets
-        WHERE   (production_date > ? OR ? IS NULL) AND
-                (production_date < ? OR ? IS NULL) AND
-                (receipe_name = ? OR ? IS NULL) AND
-                (blocked = ? OR ? IS NULL)
-    """, [after, after, before, before, cookie_name, cookie_name, blocked, blocked])
+        WHERE   (production_date > ? OR ? = "") AND
+                (production_date < ? OR ? = "") AND
+                (cookie_name = ? OR ? = "") AND
+                (blocked = ? OR ? = "")
+    """,
+        [after, after, before, before, cookie_name, cookie_name, blocked, blocked]
+    )
 
     s = [{
         "id": id,
         "cookie": cookie,
         "productionDate": production_date,
-        "customer": customer,
+        "customer": customer, #todo: detta är order_id
         "blocked": blocked
-    } for (id, cookie, prouction_date, customer, blocked) in c]
+    } for (id, cookie, production_date, customer, blocked) in c]
 
+
+    response.content_type = 'application/json'
+    response.status = 200
     return format_response({'data': s})
 
 
-@route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
+@route('/block/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])
 def block(cookie_name, from_date, to_date):
     setBlocked(1, cookie_name, from_date, to_date)
 
-@route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET','POST'])
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({"data": 'OK'})
+
+
+@route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])
 def unblock(cookie_name, from_date, to_date):
     setBlocked(0, cookie_name, from_date, to_date)
+
+    response.content_type = 'application/json'
+    response.status = 200
+    return format_response({"data": 'OK'})
+
 
 def setBlocked(blocked, cookie_name, from_date, to_date):
     c = conn.cursor()
     c.execute("""
         UPDATE pallets
         SET blocked = ?
-        WHERE recipe_name = ? AND production_date => ? AND production_date <= ?
+        WHERE cookie_name = ? AND production_date >= ? AND production_date <= ?
     """, [blocked, cookie_name, from_date, to_date])
     conn.commit()
-
-'''
-Old stuff
-def format_response(d):
-    return json.dumps(d,indent = 4) + '\n'
-
-
-@get('/movies')
-def get_movies():
-    response.content_type = 'application/json'
-    title = request.query.title
-    year = request.query.year
-    if (title and year):
-        c = conn.cursor()
-        c.execute("""
-            SELECT *
-            FROM movies
-            WHERE title=? AND prod_year=?
-        """,[title,year])
-        s = [{"imdbKey": imdb_id, "title":title,"prod_year":prod_year}
-            for (title,prod_year,imdb_id) in c]
-    else:
-        query = """
-            SELECT *
-            FROM movies
-            """
-        c = conn.cursor()
-        c.execute(query)
-        s = [{"imdbKey": imdb_id, "title":title,"prod_year":prod_year}
-            for (title,prod_year,imdb_id) in c]
-
-
-    return format_response({'data':s})
-
-@get('/movies/<imdb_id>')
-def search_movie(imdb_id):
-    response.content_type = 'application/json'
-    query = """
-        SELECT *
-        FROM movies
-        WHERE imdb_id=?
-        """
-    c = conn.cursor()
-    c.execute(query,[imdb_id])
-    s = [{"imdbKey": imdb_id, "title":title,"prod_year":prod_year}
-        for (title,prod_year,imdb_id) in c]
-
-    return format_response({'data':s})
-
-@route('/reset',method=['GET','POST'])
-def reset_database():
-    c = conn.cursor()
-    c.execute("DELETE FROM users")
-    c.execute("DELETE FROM movies")
-    c.execute("DELETE FROM performances")
-    c.execute("DELETE FROM tickets")
-    c.execute("DELETE FROM theaters")
-
-    c.execute("""
-    INSERT 
-    INTO users(username,u_name,password)
-    VALUES  ('alice','Alice','dobido'),
-            ('bob','Bob','whasinaname')
-    """)
-    conn.commit()
-    c.execute("""
-    INSERT INTO movies(title,prod_year,imdb_id)
-    VALUES  ('The Shape of Water', 2017, 'tt5580390'),
-            ('Moonlight', 2016, 'tt4975722'),
-            ('Spotlight', 2015, 'tt1895587'),
-            ('Birdman', 2014, 'tt2562232')
-    """)
-    conn.commit()
-    c.execute("""
-    INSERT INTO theaters(t_name,capacity)
-    VALUES  ('Kino', 10),
-            ('Södran', 16),
-            ('Skandia', 100)
-    """)
-    conn.commit()
-    response.content_type = 'application/json'
-    response.status = 200
-    return format_response({"data":'OK'})
-
-@route('/performances',method=['GET','POST'])
-def add_performance():
-    response.content_type = 'application/json'
-    imdb_id = request.query.imdb
-    theater = request.query.theater
-    date = request.query.date
-    time = request.query.time
-    if (imdb_id and theater and date and time):
-        c = conn.cursor()
-
-        c.execute("SELECT imdb_id FROM movies WHERE imdb_id = ?",[imdb_id])
-        movie_exist = list(c)
-        c.execute("SELECT t_name FROM theaters WHERE t_name = ?",[theater])
-        theater_exist = list(c)
-
-        if(len(movie_exist) != 0 and len(theater_exist) != 0):
-            query = """
-                INSERT INTO performances(imdb_id,t_name,date,time)
-                VALUES (?,?,?,?)
-                """
-            c.execute(query,[imdb_id,theater,date,time])
-            conn.commit()
-            p_id=c.execute("SELECT p_id FROM performances WHERE rowid = last_insert_rowid();")
-            s = c.fetchone()
-        else:
-            s = "No such movie or theater"
-
-    else:
-        query = """
-            SELECT p_id,date,time,title,prod_year,t_name,capacity-coalesce(count(id),0)
-            FROM performances
-            JOIN movies
-            USING(imdb_id)
-            JOIN theaters
-            USING(t_name)
-            LEFT JOIN tickets
-            USING(p_id)
-            """
-        c = conn.cursor()
-        c.execute(query)
-        a = [{"performanceId":p_id,"date":date,"startTime":time,"title":title,"year":prod_year,"theater":t_id,'remainingSeats':capacity}
-            for (p_id,t_id,date,time,title,prod_year,capacity) in c]
-        s={'data':a}
-
-    return format_response(s)
-
-@route('/tickets',methods=['GET','POST'])
-def add_ticket():
-    response.content_type = 'application/json'
-    user = request.query.user
-    p_id = request.query.performance
-    pwd = request.query.pwd
-    if (user and p_id and pwd):
-        c = conn.cursor()
-        query = """
-            SELECT password
-            FROM users
-            WHERE username = ?
-        """
-        c.execute(query,[user])
-        database_pw = c.fetchone()
-
-        if(pwd == database_pw[0]):
-            q = """
-                SELECT capacity-coalesce(count(id),0)
-                FROM performances
-                LEFT JOIN tickets
-                USING(p_id)
-            """
-            r_seats = c.fetchone()
-            if(r_seats == 0):
-                s= 'No remaining tickets'
-            else:
-                cticket = """
-                    INSERT
-                    INTO tickets(username,p_id)
-                    VALUES (?,?)
-                """
-                c.execute(cticket,[user,p_id])
-                conn.commit()
-                t_id=c.execute("SELECT id FROM tickets WHERE rowid = last_insert_rowid();")
-                s= c.fetchone()
-
-
-        else:
-            s = f'Wrong password' #given:{pwd} found:{database_pw[0]}
-            response.status = 401
-    else:
-        s = 'Error'
-        response.status = 400
-    return format_response(s)
-#http://localhost:7007/performances?imdb=tt5580390&theater=Kino&date=2019-02-22&time=19:00
-'''

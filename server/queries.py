@@ -124,7 +124,7 @@ def reset():
 
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({"data": 'OK'})
+    return format_response({"status": 'ok'})
 
     """
     customer: id, name text, address text,
@@ -231,9 +231,14 @@ def create_pallet():
     )
     conn.commit()
 
+    """
+    if no such cookie -> status no such cookie
+    if rollback -> status not enough ingredients,
+    """
+
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({'data': 'OK'})
+    return format_response({'status': 'ok'})
 
 
 @get('/pallets')
@@ -288,7 +293,7 @@ def block(cookie_name, from_date, to_date):
 
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({"data": 'OK'})
+    return format_response({"status": 'ok'})
 
 
 @route('/unblock/<cookie_name>/<from_date>/<to_date>', method=['GET', 'POST'])
@@ -297,7 +302,7 @@ def unblock(cookie_name, from_date, to_date):
 
     response.content_type = 'application/json'
     response.status = 200
-    return format_response({"data": 'OK'})
+    return format_response({"status": 'ok'})
 
 
 def setBlocked(blocked, cookie_name, from_date, to_date):

@@ -74,21 +74,22 @@ BEGIN
 
     UPDATE  ingredients
     SET     quantity = quantity - (
-        SELECT  quantity 
+        SELECT  quantity*54
         FROM    recipes 
-        WHERE   cookie_name = NEW.cookie_name
+        WHERE   cookie_name = NEW.cookie_name AND ingredients.name = ingredient_name
     )
     WHERE   name in (
         select  ingredient_name
         from    recipes
-        where   cookie_name = NEW.cookie_name
+        where   cookie_name = NEW.cookie_name AND name = ingredient_name
     );
 
     SELECT CASE
     WHEN (
         SELECT quantity
         FROM   ingredients
-    ) < 0
+        WHERE quantity < 0
+    ) IS NOT NULL
     THEN
         RAISE (ROLLBACK, "Insufficient ingredients!")
     END;

@@ -45,8 +45,13 @@ Using the `/reset` endpoint populates the database.
 
 ## How to compile and run the program
 
-Run the program from the command line with:
-
+Run the program from the command line:
 ```shell
-python3 server/server.py
+# webdev-backend
+1. Clone repo: git clone https://github.com/GustavHandmark/KrustyKookies-Database.git
+2. we suggest creating a virtual environment:
+    python3 -m venv venv
+3. Activate virtual environment: source venv/bin/activate
+4. Install requirements: pip install -r requirements.txt
+5. Run server locally: python3 server/server.py
 ```
